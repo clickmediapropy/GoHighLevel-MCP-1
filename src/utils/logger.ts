@@ -13,10 +13,12 @@ const LEVEL_PRIORITY: Record<LogLevel, number> = {
 const DEFAULT_LEVEL: LogLevel = 'info';
 const DEFAULT_FORMAT: LogFormat = 'text';
 
+// IMPORTANT: For STDIO MCP servers, ALL logging must go to STDERR
+// to avoid contaminating the JSON-RPC protocol messages on STDOUT
 const WRITERS: Record<LogLevel, LogWriter> = {
-  debug: console.debug.bind(console),
-  info: console.log.bind(console),
-  warn: console.warn.bind(console),
+  debug: console.error.bind(console),
+  info: console.error.bind(console),
+  warn: console.error.bind(console),
   error: console.error.bind(console),
 };
 
