@@ -378,13 +378,13 @@ export class LocationTools {
       // Custom Fields Tools
       {
         name: 'get_location_custom_fields',
-        description: 'Get custom fields for a location, optionally filtered by model type',
+        description: 'Get custom fields for a location, optionally filtered by model type. Uses the configured location ID if not specified.',
         inputSchema: {
           type: 'object',
           properties: {
             locationId: {
               type: 'string',
-              description: 'The location ID'
+              description: 'The location ID (optional - uses configured location ID if not provided)'
             },
             model: {
               type: 'string',
@@ -392,8 +392,7 @@ export class LocationTools {
               description: 'Filter by model type (default: all)',
               default: 'all'
             }
-          },
-          required: ['locationId']
+          }
         }
       },
       {
@@ -939,7 +938,9 @@ export class LocationTools {
 
   private async getLocationCustomFields(params: MCPGetCustomFieldsParams): Promise<{ success: boolean; customFields: GHLLocationCustomField[]; message: string }> {
     try {
-      const response = await this.ghlClient.getLocationCustomFields(params.locationId, params.model);
+      // Use provided locationId or fall back to configured default
+      const locationId = params.locationId || this.ghlClient.getConfig().locationId;
+      const response = await this.ghlClient.getLocationCustomFields(locationId, params.model);
       if (!response.success || !response.data) {
         const errorMsg = response.error?.message || 'Unknown API error';
         throw new Error(`API request failed: ${errorMsg}`);
@@ -948,7 +949,7 @@ export class LocationTools {
       return {
         success: true,
         customFields,
-        message: `Retrieved ${customFields.length} custom fields`
+        message: `Retrieved ${customFields.length} custom fields for location ${locationId}`
       };
     } catch (error) {
       throw new Error(`Failed to get custom fields: ${error instanceof Error ? error.message : String(error)}`);
