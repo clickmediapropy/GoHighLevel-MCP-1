@@ -4,6 +4,7 @@
  */
 
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import { Logger, createLogger } from '../utils/logger.js';
 import {
   GHLConfig,
   GHLContact,
@@ -130,43 +131,7 @@ import {
   GHLUploadFilesRequest,
   GHLUploadFilesResponse,
   GHLUpdateMessageStatusRequest,
-  // Social Media Posting API types
-  GHLSocialPlatform,
-  GHLSearchPostsRequest,
-  GHLSearchPostsResponse,
-  GHLCreatePostRequest,
-  GHLCreatePostResponse,
-  GHLUpdatePostRequest,
-  GHLGetPostResponse,
-  GHLBulkDeletePostsRequest,
-  GHLBulkDeleteResponse,
-  GHLGetAccountsResponse,
-  GHLUploadCSVRequest,
-  GHLUploadCSVResponse,
-  GHLGetUploadStatusResponse,
-  GHLSetAccountsRequest,
-  GHLCSVFinalizeRequest,
-  GHLGetCategoriesResponse,
-  GHLGetCategoryResponse,
-  GHLGetTagsResponse,
-  GHLGetTagsByIdsRequest,
-  GHLGetTagsByIdsResponse,
-  GHLOAuthStartResponse,
-  GHLGetGoogleLocationsResponse,
-  GHLAttachGMBLocationRequest,
-  GHLGetFacebookPagesResponse,
-  GHLAttachFBAccountRequest,
-  GHLGetInstagramAccountsResponse,
-  GHLAttachIGAccountRequest,
-  GHLGetLinkedInAccountsResponse,
-  GHLAttachLinkedInAccountRequest,
-  GHLGetTwitterAccountsResponse,
-  GHLAttachTwitterAccountRequest,
-  GHLGetTikTokAccountsResponse,
-  GHLAttachTikTokAccountRequest,
-  GHLCSVImport,
-  GHLSocialPost,
-  GHLSocialAccount,
+  // Calendar & scheduling supplemental types
   GHLValidateGroupSlugResponse,
   GHLGroupSuccessResponse,
   GHLGroupStatusUpdateRequest,
@@ -380,7 +345,29 @@ import {
   CreateInvoiceDto,
   CreateInvoiceResponseDto,
   ListInvoicesResponseDto,
-  AltDto
+  AltDto,
+  // Knowledge Base types
+  GHLKnowledgeBase,
+  GHLKnowledgeBaseResponse,
+  GHLListKnowledgeBasesResponse,
+  GHLDeleteKnowledgeBaseResponse,
+  GHLCreateKnowledgeBaseRequest,
+  GHLUpdateKnowledgeBaseRequest,
+  GHLListKnowledgeBasesRequest,
+  MCPGetKnowledgeBaseParams,
+  MCPDeleteKnowledgeBaseParams,
+  MCPUpdateKnowledgeBaseParams,
+  MCPListKnowledgeBasesParams,
+  MCPCreateKnowledgeBaseParams,
+  // Knowledge Base FAQ types
+  GHLKnowledgeBaseFAQ,
+  GHLListKnowledgeBaseFAQsRequest,
+  GHLListKnowledgeBaseFAQsResponse,
+  GHLCreateKnowledgeBaseFAQRequest,
+  GHLCreateKnowledgeBaseFAQResponse,
+  GHLUpdateKnowledgeBaseFAQRequest,
+  GHLUpdateKnowledgeBaseFAQResponse,
+  GHLDeleteKnowledgeBaseFAQResponse
 } from '../types/ghl-types.js';
 
 /**
@@ -391,9 +378,12 @@ export class GHLApiClient {
   private axiosInstance: AxiosInstance;
   private config: GHLConfig;
 
-  constructor(config: GHLConfig) {
+  private logger: Logger;
+
+  constructor(config: GHLConfig, logger: Logger = createLogger('GHLApiClient')) {
     this.config = config;
-    
+    this.logger = logger;
+
     // Create axios instance with base configuration
     this.axiosInstance = axios.create({
       baseURL: config.baseUrl,
@@ -409,11 +399,17 @@ export class GHLApiClient {
     // Add request interceptor for logging
     this.axiosInstance.interceptors.request.use(
       (config) => {
-        process.stderr.write(`[GHL API] ${config.method?.toUpperCase()} ${config.url}\n`);
+        this.logger.debug('HTTP request', {
+          method: config.method?.toUpperCase(),
+          url: config.url
+        });
         return config;
       },
       (error) => {
-        console.error('[GHL API] Request error:', error);
+        this.logger.error('HTTP request error', {
+          message: error.message,
+          url: error.config?.url
+        });
         return Promise.reject(error);
       }
     );
@@ -421,13 +417,16 @@ export class GHLApiClient {
     // Add response interceptor for error handling
     this.axiosInstance.interceptors.response.use(
       (response) => {
-        process.stderr.write(`[GHL API] Response ${response.status}: ${response.config.url}\n`);
+        this.logger.debug('HTTP response', {
+          status: response.status,
+          url: response.config.url
+        });
         return response;
       },
       (error: AxiosError<GHLErrorResponse>) => {
-        console.error('[GHL API] Response error:', {
+        this.logger.error('HTTP response error', {
           status: error.response?.status,
-          message: error.response?.data?.message,
+          message: error.response?.data?.message || error.message,
           url: error.config?.url
         });
         return Promise.reject(this.handleApiError(error));
@@ -601,7 +600,7 @@ export class GHLApiClient {
         }
       }
 
-      process.stderr.write(`[GHL API] Search contacts payload: ${JSON.stringify(payload, null, 2)}\n`);
+      this.logger.debug('Search contacts payload', { payload });
 
       const response: AxiosResponse<GHLSearchContactsResponse> = await this.axiosInstance.post(
         '/contacts/search',
@@ -611,12 +610,12 @@ export class GHLApiClient {
       return this.wrapResponse(response.data);
     } catch (error) {
       const axiosError = error as AxiosError<GHLErrorResponse>;
-      process.stderr.write(`[GHL API] Search contacts error: ${JSON.stringify({
+      this.logger.error('Search contacts error', {
         status: axiosError.response?.status,
         statusText: axiosError.response?.statusText,
         data: axiosError.response?.data,
         message: axiosError.message
-      }, null, 2)}\n`);
+      });
       
       const handledError = this.handleApiError(axiosError);
       return {
@@ -1548,7 +1547,7 @@ export class GHLApiClient {
   updateAccessToken(newToken: string): void {
     this.config.accessToken = newToken;
     this.axiosInstance.defaults.headers['Authorization'] = `Bearer ${newToken}`;
-            process.stderr.write('[GHL API] Access token updated\n');
+    this.logger.info('Access token updated');
   }
 
   /**
@@ -1650,7 +1649,7 @@ export class GHLApiClient {
         params.getCalendarEvents = searchParams.getCalendarEvents;
       }
 
-      process.stderr.write(`[GHL API] Search opportunities params: ${JSON.stringify(params, null, 2)}\n`);
+      this.logger.debug('Search opportunities params', { params });
 
       const response: AxiosResponse<GHLSearchOpportunitiesResponse> = await this.axiosInstance.get(
         '/opportunities/search',
@@ -1660,12 +1659,12 @@ export class GHLApiClient {
       return this.wrapResponse(response.data);
     } catch (error) {
       const axiosError = error as AxiosError<GHLErrorResponse>;
-      process.stderr.write(`[GHL API] Search opportunities error: ${JSON.stringify({
+      this.logger.error('Search opportunities error', {
         status: axiosError.response?.status,
         statusText: axiosError.response?.statusText,
         data: axiosError.response?.data,
         message: axiosError.message
-      }, null, 2)}\n`);
+      });
       
       throw this.handleApiError(axiosError);
     }
@@ -2938,345 +2937,6 @@ export class GHLApiClient {
     } catch (error) {
       throw this.handleApiError(error as AxiosError<GHLErrorResponse>);
     }
-  }
-
-  // ============================================================================
-  // SOCIAL MEDIA POSTING API METHODS
-  // ============================================================================
-
-  // ===== POST MANAGEMENT =====
-
-  /**
-   * Search/List Social Media Posts
-   */
-  async searchSocialPosts(searchData: GHLSearchPostsRequest): Promise<GHLApiResponse<GHLSearchPostsResponse>> {
-    try {
-      const locationId = this.config.locationId;
-      const response: AxiosResponse<GHLSearchPostsResponse> = await this.axiosInstance.post(
-        `/social-media-posting/${locationId}/posts/list`,
-        searchData
-      );
-      return this.wrapResponse(response.data);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Create Social Media Post
-   */
-  async createSocialPost(postData: GHLCreatePostRequest): Promise<GHLApiResponse<GHLCreatePostResponse>> {
-    try {
-      const locationId = this.config.locationId;
-      const response: AxiosResponse<GHLCreatePostResponse> = await this.axiosInstance.post(
-        `/social-media-posting/${locationId}/posts`,
-        postData
-      );
-      return this.wrapResponse(response.data);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Get Social Media Post by ID
-   */
-  async getSocialPost(postId: string): Promise<GHLApiResponse<GHLGetPostResponse>> {
-    try {
-      const locationId = this.config.locationId;
-      const response: AxiosResponse<GHLGetPostResponse> = await this.axiosInstance.get(
-        `/social-media-posting/${locationId}/posts/${postId}`
-      );
-      return this.wrapResponse(response.data);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Update Social Media Post
-   */
-  async updateSocialPost(postId: string, updateData: GHLUpdatePostRequest): Promise<GHLApiResponse<any>> {
-    try {
-      const locationId = this.config.locationId;
-      const response: AxiosResponse<any> = await this.axiosInstance.put(
-        `/social-media-posting/${locationId}/posts/${postId}`,
-        updateData
-      );
-      return this.wrapResponse(response.data);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Delete Social Media Post
-   */
-  async deleteSocialPost(postId: string): Promise<GHLApiResponse<any>> {
-    try {
-      const locationId = this.config.locationId;
-      const response: AxiosResponse<any> = await this.axiosInstance.delete(
-        `/social-media-posting/${locationId}/posts/${postId}`
-      );
-      return this.wrapResponse(response.data);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Bulk Delete Social Media Posts
-   */
-  async bulkDeleteSocialPosts(deleteData: GHLBulkDeletePostsRequest): Promise<GHLApiResponse<GHLBulkDeleteResponse>> {
-    try {
-      const locationId = this.config.locationId;
-      const response: AxiosResponse<GHLBulkDeleteResponse> = await this.axiosInstance.post(
-        `/social-media-posting/${locationId}/posts/bulk-delete`,
-        deleteData
-      );
-      return this.wrapResponse(response.data);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  // ===== ACCOUNT MANAGEMENT =====
-
-  /**
-   * Get Social Media Accounts and Groups
-   */
-  async getSocialAccounts(): Promise<GHLApiResponse<GHLGetAccountsResponse>> {
-    try {
-      const locationId = this.config.locationId;
-      const response: AxiosResponse<GHLGetAccountsResponse> = await this.axiosInstance.get(
-        `/social-media-posting/${locationId}/accounts`
-      );
-      return this.wrapResponse(response.data);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Delete Social Media Account
-   */
-  async deleteSocialAccount(accountId: string, companyId?: string, userId?: string): Promise<GHLApiResponse<any>> {
-    try {
-      const locationId = this.config.locationId;
-      const params: any = {};
-      if (companyId) params.companyId = companyId;
-      if (userId) params.userId = userId;
-      
-      const response: AxiosResponse<any> = await this.axiosInstance.delete(
-        `/social-media-posting/${locationId}/accounts/${accountId}`,
-        { params }
-      );
-      return this.wrapResponse(response.data);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  // ===== CSV OPERATIONS =====
-
-  /**
-   * Upload CSV for Social Media Posts
-   */
-  async uploadSocialCSV(csvData: GHLUploadCSVRequest): Promise<GHLApiResponse<GHLUploadCSVResponse>> {
-    try {
-      const locationId = this.config.locationId;
-      // Note: This would typically use FormData for file upload
-      const response: AxiosResponse<GHLUploadCSVResponse> = await this.axiosInstance.post(
-        `/social-media-posting/${locationId}/csv`,
-        csvData
-      );
-      return this.wrapResponse(response.data);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Get CSV Upload Status
-   */
-  async getSocialCSVUploadStatus(skip?: number, limit?: number, includeUsers?: boolean, userId?: string): Promise<GHLApiResponse<GHLGetUploadStatusResponse>> {
-    try {
-      const locationId = this.config.locationId;
-      const params: any = {};
-      if (skip !== undefined) params.skip = skip.toString();
-      if (limit !== undefined) params.limit = limit.toString();
-      if (includeUsers !== undefined) params.includeUsers = includeUsers.toString();
-      if (userId) params.userId = userId;
-      
-      const response: AxiosResponse<GHLGetUploadStatusResponse> = await this.axiosInstance.get(
-        `/social-media-posting/${locationId}/csv`,
-        { params }
-      );
-      return this.wrapResponse(response.data);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Set Accounts for CSV Import
-   */
-  async setSocialCSVAccounts(accountsData: GHLSetAccountsRequest): Promise<GHLApiResponse<any>> {
-    try {
-      const locationId = this.config.locationId;
-      const response: AxiosResponse<any> = await this.axiosInstance.post(
-        `/social-media-posting/${locationId}/set-accounts`,
-        accountsData
-      );
-      return this.wrapResponse(response.data);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Get CSV Posts
-   */
-  async getSocialCSVPosts(csvId: string, skip?: number, limit?: number): Promise<GHLApiResponse<any>> {
-    try {
-      const locationId = this.config.locationId;
-      const params: any = {};
-      if (skip !== undefined) params.skip = skip.toString();
-      if (limit !== undefined) params.limit = limit.toString();
-      
-      const response: AxiosResponse<any> = await this.axiosInstance.get(
-        `/social-media-posting/${locationId}/csv/${csvId}`,
-        { params }
-      );
-      return this.wrapResponse(response.data);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Start CSV Finalization
-   */
-  async finalizeSocialCSV(csvId: string, finalizeData: GHLCSVFinalizeRequest): Promise<GHLApiResponse<any>> {
-    try {
-      const locationId = this.config.locationId;
-      const response: AxiosResponse<any> = await this.axiosInstance.patch(
-        `/social-media-posting/${locationId}/csv/${csvId}`,
-        finalizeData
-      );
-      return this.wrapResponse(response.data);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Delete CSV Import
-   */
-  async deleteSocialCSV(csvId: string): Promise<GHLApiResponse<any>> {
-    try {
-      const locationId = this.config.locationId;
-      const response: AxiosResponse<any> = await this.axiosInstance.delete(
-        `/social-media-posting/${locationId}/csv/${csvId}`
-      );
-      return this.wrapResponse(response.data);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Delete CSV Post
-   */
-  async deleteSocialCSVPost(csvId: string, postId: string): Promise<GHLApiResponse<any>> {
-    try {
-      const locationId = this.config.locationId;
-      const response: AxiosResponse<any> = await this.axiosInstance.delete(
-        `/social-media-posting/${locationId}/csv/${csvId}/post/${postId}`
-      );
-      return this.wrapResponse(response.data);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  // ===== CATEGORIES & TAGS =====
-
-  /**
-   * Get Social Media Categories
-   */
-  async getSocialCategories(searchText?: string, limit?: number, skip?: number): Promise<GHLApiResponse<GHLGetCategoriesResponse>> {
-    // TODO: Implement this method properly
-    throw new Error('Method not yet implemented');
-  }
-
-  // TODO: Implement remaining social media API methods
-  async getSocialCategory(categoryId: string): Promise<GHLApiResponse<GHLGetCategoryResponse>> {
-    throw new Error('Method not yet implemented');
-  }
-
-  async getSocialTags(searchText?: string, limit?: number, skip?: number): Promise<GHLApiResponse<GHLGetTagsResponse>> {
-    throw new Error('Method not yet implemented');
-  }
-
-  async getSocialTagsByIds(tagData: GHLGetTagsByIdsRequest): Promise<GHLApiResponse<GHLGetTagsByIdsResponse>> {
-    throw new Error('Method not yet implemented');
-  }
-
-  async startSocialOAuth(platform: GHLSocialPlatform, userId: string, page?: string, reconnect?: boolean): Promise<GHLApiResponse<GHLOAuthStartResponse>> {
-    throw new Error('Method not yet implemented');
-  }
-
-  async getGoogleBusinessLocations(accountId: string): Promise<GHLApiResponse<GHLGetGoogleLocationsResponse>> {
-    throw new Error('Method not yet implemented');
-  }
-
-  async setGoogleBusinessLocations(accountId: string, locationData: GHLAttachGMBLocationRequest): Promise<GHLApiResponse<GHLSocialAccount>> {
-    throw new Error('Method not yet implemented');
-  }
-
-  async getFacebookPages(accountId: string): Promise<GHLApiResponse<GHLGetFacebookPagesResponse>> {
-    throw new Error('Method not yet implemented');
-  }
-
-  async attachFacebookPages(accountId: string, pageData: GHLAttachFBAccountRequest): Promise<GHLApiResponse<GHLSocialAccount>> {
-    throw new Error('Method not yet implemented');
-  }
-
-  async getInstagramAccounts(accountId: string): Promise<GHLApiResponse<GHLGetInstagramAccountsResponse>> {
-    throw new Error('Method not yet implemented');
-  }
-
-  async attachInstagramAccounts(accountId: string, accountData: GHLAttachIGAccountRequest): Promise<GHLApiResponse<GHLSocialAccount>> {
-    throw new Error('Method not yet implemented');
-  }
-
-  async getLinkedInAccounts(accountId: string): Promise<GHLApiResponse<GHLGetLinkedInAccountsResponse>> {
-    throw new Error('Method not yet implemented');
-  }
-
-  async attachLinkedInAccounts(accountId: string, accountData: GHLAttachLinkedInAccountRequest): Promise<GHLApiResponse<GHLSocialAccount>> {
-    throw new Error('Method not yet implemented');
-  }
-
-  async getTwitterProfile(accountId: string): Promise<GHLApiResponse<GHLGetTwitterAccountsResponse>> {
-    throw new Error('Method not yet implemented');
-  }
-
-  async attachTwitterProfile(accountId: string, profileData: GHLAttachTwitterAccountRequest): Promise<GHLApiResponse<GHLSocialAccount>> {
-    throw new Error('Method not yet implemented');
-  }
-
-  async getTikTokProfile(accountId: string): Promise<GHLApiResponse<GHLGetTikTokAccountsResponse>> {
-    throw new Error('Method not yet implemented');
-  }
-
-  async attachTikTokProfile(accountId: string, profileData: GHLAttachTikTokAccountRequest): Promise<GHLApiResponse<GHLSocialAccount>> {
-    throw new Error('Method not yet implemented');
-  }
-
-  async getTikTokBusinessProfile(accountId: string): Promise<GHLApiResponse<GHLGetTikTokAccountsResponse>> {
-    throw new Error('Method not yet implemented');
   }
 
   // ===== MISSING CALENDAR GROUPS MANAGEMENT METHODS =====
@@ -6818,6 +6478,236 @@ export class GHLApiClient {
       const response: AxiosResponse<ListInvoicesResponseDto> = await this.axiosInstance.get(
         '/invoices/',
         { params: queryParams }
+      );
+
+      return this.wrapResponse(response.data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // ===== KNOWLEDGE BASE API METHODS =====
+
+  /**
+   * Get knowledge base by ID
+   * GET /knowledge-bases/:knowledgeBaseId
+   */
+  async getKnowledgeBase(knowledgeBaseId: string): Promise<GHLApiResponse<GHLKnowledgeBase>> {
+    try {
+      const response: AxiosResponse<GHLKnowledgeBaseResponse> = await this.axiosInstance.get(
+        `/knowledge-bases/${knowledgeBaseId}`,
+        {
+          headers: {
+            'Version': '2021-04-15'
+          }
+        }
+      );
+
+      return this.wrapResponse(response.data.data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a knowledge base
+   * DELETE /knowledge-bases/:knowledgeBaseId
+   */
+  async deleteKnowledgeBase(knowledgeBaseId: string): Promise<GHLApiResponse<{ success: boolean }>> {
+    try {
+      const response: AxiosResponse<GHLDeleteKnowledgeBaseResponse> = await this.axiosInstance.delete(
+        `/knowledge-bases/${knowledgeBaseId}`,
+        {
+          headers: {
+            'Version': '2021-04-15'
+          }
+        }
+      );
+
+      return this.wrapResponse({ success: response.data.success });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Update a knowledge base
+   * PUT /knowledge-bases/:id
+   */
+  async updateKnowledgeBase(id: string, params: GHLUpdateKnowledgeBaseRequest): Promise<GHLApiResponse<{ success: boolean }>> {
+    try {
+      const response: AxiosResponse<{ success: boolean }> = await this.axiosInstance.put(
+        `/knowledge-bases/${id}`,
+        params,
+        {
+          headers: {
+            'Version': '2021-04-15'
+          }
+        }
+      );
+
+      return this.wrapResponse({ success: response.data.success });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Get all knowledge bases for a location (paginated)
+   * GET /knowledge-bases/
+   */
+  async listKnowledgeBases(params: GHLListKnowledgeBasesRequest): Promise<GHLApiResponse<GHLListKnowledgeBasesResponse['data']>> {
+    try {
+      const queryParams = {
+        locationId: params.locationId || this.config.locationId,
+        ...(params.query && { query: params.query }),
+        ...(params.limit && { limit: params.limit }),
+        ...(params.lastKnowledgeBaseId && { lastKnowledgeBaseId: params.lastKnowledgeBaseId })
+      };
+
+      const response: AxiosResponse<GHLListKnowledgeBasesResponse> = await this.axiosInstance.get(
+        '/knowledge-bases/',
+        { 
+          params: queryParams,
+          headers: {
+            'Version': '2021-04-15'
+          }
+        }
+      );
+
+      return this.wrapResponse(response.data.data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new knowledge base (max 15 per location)
+   * POST /knowledge-bases/
+   */
+  async createKnowledgeBase(params: GHLCreateKnowledgeBaseRequest): Promise<GHLApiResponse<GHLKnowledgeBase>> {
+    try {
+      const requestBody = {
+        name: params.name,
+        locationId: params.locationId || this.config.locationId,
+        ...(params.description && { description: params.description })
+      };
+
+      const response: AxiosResponse<GHLKnowledgeBaseResponse> = await this.axiosInstance.post(
+        '/knowledge-bases/',
+        requestBody,
+        {
+          headers: {
+            'Version': '2021-04-15'
+          }
+        }
+      );
+
+      return this.wrapResponse(response.data.data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // ===== KNOWLEDGE BASE FAQ MANAGEMENT =====
+
+  /**
+   * List all FAQs by knowledge base with pagination support
+   * GET /knowledge-bases/faqs
+   */
+  async listKnowledgeBaseFAQs(params: GHLListKnowledgeBaseFAQsRequest): Promise<GHLApiResponse<GHLListKnowledgeBaseFAQsResponse>> {
+    try {
+      const queryParams = new URLSearchParams({
+        knowledgeBaseId: params.knowledgeBaseId,
+        locationId: params.locationId || this.config.locationId,
+        ...(params.limit && { limit: params.limit.toString() }),
+        ...(params.lastFaqId && { lastFaqId: params.lastFaqId })
+      });
+
+      const response: AxiosResponse<GHLListKnowledgeBaseFAQsResponse> = await this.axiosInstance.get(
+        `/knowledge-bases/faqs?${queryParams.toString()}`,
+        {
+          headers: {
+            'Version': '2021-04-15'
+          }
+        }
+      );
+
+      return this.wrapResponse(response.data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new FAQ inside knowledge base
+   * POST /knowledge-bases/faqs
+   */
+  async createKnowledgeBaseFAQ(params: GHLCreateKnowledgeBaseFAQRequest): Promise<GHLApiResponse<GHLCreateKnowledgeBaseFAQResponse>> {
+    try {
+      const requestBody = {
+        locationId: params.locationId || this.config.locationId,
+        question: params.question,
+        answer: params.answer,
+        knowledgeBaseId: params.knowledgeBaseId
+      };
+
+      const response: AxiosResponse<GHLCreateKnowledgeBaseFAQResponse> = await this.axiosInstance.post(
+        '/knowledge-bases/faqs',
+        requestBody,
+        {
+          headers: {
+            'Version': '2021-04-15'
+          }
+        }
+      );
+
+      return this.wrapResponse(response.data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Update an existing knowledge base FAQ
+   * PUT /knowledge-bases/faqs/:id
+   */
+  async updateKnowledgeBaseFAQ(faqId: string, params: GHLUpdateKnowledgeBaseFAQRequest): Promise<GHLApiResponse<GHLUpdateKnowledgeBaseFAQResponse>> {
+    try {
+      const requestBody = {
+        question: params.question,
+        answer: params.answer
+      };
+
+      const response: AxiosResponse<GHLUpdateKnowledgeBaseFAQResponse> = await this.axiosInstance.put(
+        `/knowledge-bases/faqs/${faqId}`,
+        requestBody,
+        {
+          headers: {
+            'Version': '2021-04-15'
+          }
+        }
+      );
+
+      return this.wrapResponse(response.data);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Delete an existing knowledge base FAQ
+   * DELETE /knowledge-bases/faqs/:id
+   */
+  async deleteKnowledgeBaseFAQ(faqId: string): Promise<GHLApiResponse<GHLDeleteKnowledgeBaseFAQResponse>> {
+    try {
+      const response: AxiosResponse<GHLDeleteKnowledgeBaseFAQResponse> = await this.axiosInstance.delete(
+        `/knowledge-bases/faqs/${faqId}`,
+        {
+          headers: {
+            'Version': '2021-04-15'
+          }
+        }
       );
 
       return this.wrapResponse(response.data);

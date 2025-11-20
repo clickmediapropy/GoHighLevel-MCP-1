@@ -1,3 +1,4 @@
+import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { GHLApiClient } from '../clients/ghl-api-client.js';
 import {
   MCPGetMediaFilesParams,
@@ -7,16 +8,6 @@ import {
   GHLUploadMediaFileRequest,
   GHLDeleteMediaRequest
 } from '../types/ghl-types.js';
-
-export interface Tool {
-  name: string;
-  description: string;
-  inputSchema: {
-    type: string;
-    properties: Record<string, any>;
-    required: string[];
-  };
-}
 
 /**
  * MediaTools class for GoHighLevel Media Library API endpoints

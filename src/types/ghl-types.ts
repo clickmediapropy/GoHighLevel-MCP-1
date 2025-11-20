@@ -2315,606 +2315,6 @@ export interface MCPDeleteConversationParams {
   conversationId: string;
 }
 
-// SOCIAL MEDIA POSTING API INTERFACES - Based on Social Media Posting API
-
-// Platform Types
-export type GHLSocialPlatform = 'google' | 'facebook' | 'instagram' | 'linkedin' | 'twitter' | 'tiktok' | 'tiktok-business';
-export type GHLPostStatus = 'in_progress' | 'draft' | 'failed' | 'published' | 'scheduled' | 'in_review' | 'notification_sent' | 'deleted';
-export type GHLPostType = 'post' | 'story' | 'reel';
-export type GHLPostSource = 'composer' | 'csv' | 'recurring' | 'review' | 'rss';
-export type GHLCSVStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'in_review' | 'importing' | 'deleted';
-export type GHLAccountType = 'page' | 'group' | 'profile' | 'location' | 'business';
-export type GHLGMBEventType = 'STANDARD' | 'EVENT' | 'OFFER';
-export type GHLGMBActionType = 'none' | 'order' | 'book' | 'shop' | 'learn_more' | 'call' | 'sign_up';
-export type GHLTikTokPrivacyLevel = 'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'SELF_ONLY';
-
-// OAuth Start Response Interface
-export interface GHLOAuthStartResponse {
-  success: boolean;
-  statusCode: number;
-  message: string;
-}
-
-// Media Interfaces
-export interface GHLPostMedia {
-  url: string;
-  caption?: string;
-  type?: string; // MIME type
-  thumbnail?: string;
-  defaultThumb?: string;
-  id?: string;
-}
-
-export interface GHLOgTags {
-  metaImage?: string;
-  metaLink?: string;
-}
-
-// User Interface for Posts
-export interface GHLPostUser {
-  id: string;
-  title?: string;
-  firstName?: string;
-  lastName?: string;
-  profilePhoto?: string;
-  phone?: string;
-  email?: string;
-}
-
-// Post Approval Interface
-export interface GHLPostApproval {
-  approver?: string;
-  requesterNote?: string;
-  approverNote?: string;
-  approvalStatus?: 'pending' | 'approved' | 'rejected' | 'not_required';
-  approverUser?: GHLPostUser;
-}
-
-// TikTok Post Details
-export interface GHLTikTokPostDetails {
-  privacyLevel?: GHLTikTokPrivacyLevel;
-  promoteOtherBrand?: boolean;
-  enableComment?: boolean;
-  enableDuet?: boolean;
-  enableStitch?: boolean;
-  videoDisclosure?: boolean;
-  promoteYourBrand?: boolean;
-}
-
-// GMB Post Details
-export interface GHLGMBPostDetails {
-  gmbEventType?: GHLGMBEventType;
-  title?: string;
-  offerTitle?: string;
-  startDate?: {
-    startDate?: { year: number; month: number; day: number };
-    startTime?: { hours: number; minutes: number; seconds: number };
-  };
-  endDate?: {
-    endDate?: { year: number; month: number; day: number };
-    endTime?: { hours: number; minutes: number; seconds: number };
-  };
-  termsConditions?: string;
-  url?: string;
-  couponCode?: string;
-  redeemOnlineUrl?: string;
-  actionType?: GHLGMBActionType;
-}
-
-// Post Interface
-export interface GHLSocialPost {
-  _id: string;
-  source: GHLPostSource;
-  locationId: string;
-  platform: GHLSocialPlatform;
-  displayDate?: string;
-  createdAt: string;
-  updatedAt: string;
-  accountId?: string;
-  accountIds: string[];
-  error?: string;
-  postId?: string;
-  publishedAt?: string;
-  summary: string;
-  media?: GHLPostMedia[];
-  status: GHLPostStatus;
-  createdBy?: string;
-  type: GHLPostType;
-  tags?: string[];
-  ogTagsDetails?: GHLOgTags;
-  postApprovalDetails?: GHLPostApproval;
-  tiktokPostDetails?: GHLTikTokPostDetails;
-  gmbPostDetails?: GHLGMBPostDetails;
-  user?: GHLPostUser;
-  followUpComment?: string;
-}
-
-// Account Interface
-export interface GHLSocialAccount {
-  id: string;
-  oauthId?: string;
-  profileId?: string;
-  name: string;
-  platform: GHLSocialPlatform;
-  type: GHLAccountType;
-  expire?: string;
-  isExpired?: boolean;
-  meta?: any;
-  avatar?: string;
-  originId?: string;
-  locationId?: string;
-  active?: boolean;
-  deleted?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-// Group Interface
-export interface GHLSocialGroup {
-  id: string;
-  name: string;
-  accountIds: string[];
-}
-
-// Category Interface
-export interface GHLSocialCategory {
-  _id: string;
-  name: string;
-  primaryColor?: string;
-  secondaryColor?: string;
-  locationId: string;
-  createdBy?: string;
-  deleted: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-// Tag Interface
-export interface GHLSocialTag {
-  _id: string;
-  tag: string;
-  locationId: string;
-  createdBy?: string;
-  deleted?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-// CSV Import Interface
-export interface GHLCSVImport {
-  _id: string;
-  locationId: string;
-  fileName: string;
-  accountIds: string[];
-  file: string;
-  status: GHLCSVStatus;
-  count: number;
-  createdBy?: string;
-  traceId?: string;
-  originId?: string;
-  approver?: string;
-  createdAt: string;
-}
-
-// Request Interfaces
-
-// Search Posts Request
-export interface GHLSearchPostsRequest {
-  type?: 'recent' | 'all' | 'scheduled' | 'draft' | 'failed' | 'in_review' | 'published' | 'in_progress' | 'deleted';
-  accounts?: string; // Comma-separated account IDs
-  skip?: string;
-  limit?: string;
-  fromDate: string;
-  toDate: string;
-  includeUsers: string;
-  postType?: GHLPostType;
-}
-
-// Create/Update Post Request
-export interface GHLCreatePostRequest {
-  accountIds: string[];
-  summary: string;
-  media?: GHLPostMedia[];
-  status?: GHLPostStatus;
-  scheduleDate?: string;
-  createdBy?: string;
-  followUpComment?: string;
-  ogTagsDetails?: GHLOgTags;
-  type: GHLPostType;
-  postApprovalDetails?: GHLPostApproval;
-  scheduleTimeUpdated?: boolean;
-  tags?: string[];
-  categoryId?: string;
-  tiktokPostDetails?: GHLTikTokPostDetails;
-  gmbPostDetails?: GHLGMBPostDetails;
-  userId?: string;
-}
-
-export interface GHLUpdatePostRequest extends Partial<GHLCreatePostRequest> {}
-
-// Bulk Delete Request
-export interface GHLBulkDeletePostsRequest {
-  postIds: string[];
-}
-
-// CSV Upload Request
-export interface GHLUploadCSVRequest {
-  file: any; // File upload
-}
-
-// Set Accounts Request
-export interface GHLSetAccountsRequest {
-  accountIds: string[];
-  filePath: string;
-  rowsCount: number;
-  fileName: string;
-  approver?: string;
-  userId?: string;
-}
-
-// CSV Finalize Request
-export interface GHLCSVFinalizeRequest {
-  userId?: string;
-}
-
-// Tag Search Request
-export interface GHLGetTagsByIdsRequest {
-  tagIds: string[];
-}
-
-// OAuth Platform Account Interfaces
-export interface GHLGoogleLocation {
-  name: string;
-  storeCode?: string;
-  title: string;
-  metadata?: any;
-  storefrontAddress?: any;
-  relationshipData?: any;
-  maxLocation?: boolean;
-  isVerified?: boolean;
-  isConnected?: boolean;
-}
-
-export interface GHLGoogleAccount {
-  name: string;
-  accountName: string;
-  type: string;
-  verificationState?: string;
-  vettedState?: string;
-}
-
-export interface GHLFacebookPage {
-  id: string;
-  name: string;
-  avatar?: string;
-  isOwned?: boolean;
-  isConnected?: boolean;
-}
-
-export interface GHLInstagramAccount {
-  id: string;
-  name: string;
-  avatar?: string;
-  pageId?: string;
-  isConnected?: boolean;
-}
-
-export interface GHLLinkedInPage {
-  id: string;
-  name: string;
-  avatar?: string;
-  urn?: string;
-  isConnected?: boolean;
-}
-
-export interface GHLLinkedInProfile {
-  id: string;
-  name: string;
-  avatar?: string;
-  urn?: string;
-  isConnected?: boolean;
-}
-
-export interface GHLTwitterProfile {
-  id: string;
-  name: string;
-  username?: string;
-  avatar?: string;
-  protected?: boolean;
-  verified?: boolean;
-  isConnected?: boolean;
-}
-
-export interface GHLTikTokProfile {
-  id: string;
-  name: string;
-  username?: string;
-  avatar?: string;
-  verified?: boolean;
-  isConnected?: boolean;
-  type?: 'business' | 'profile';
-}
-
-// OAuth Attach Requests
-export interface GHLAttachGMBLocationRequest {
-  location: any;
-  account: any;
-  companyId?: string;
-}
-
-export interface GHLAttachFBAccountRequest {
-  type: 'page';
-  originId: string;
-  name: string;
-  avatar?: string;
-  companyId?: string;
-}
-
-export interface GHLAttachIGAccountRequest {
-  originId: string;
-  name: string;
-  avatar?: string;
-  pageId: string;
-  companyId?: string;
-}
-
-export interface GHLAttachLinkedInAccountRequest {
-  type: GHLAccountType;
-  originId: string;
-  name: string;
-  avatar?: string;
-  urn?: string;
-  companyId?: string;
-}
-
-export interface GHLAttachTwitterAccountRequest {
-  originId: string;
-  name: string;
-  username?: string;
-  avatar?: string;
-  protected?: boolean;
-  verified?: boolean;
-  companyId?: string;
-}
-
-export interface GHLAttachTikTokAccountRequest {
-  type: GHLAccountType;
-  originId: string;
-  name: string;
-  avatar?: string;
-  verified?: boolean;
-  username?: string;
-  companyId?: string;
-}
-
-// Response Interfaces
-export interface GHLSearchPostsResponse {
-  posts: GHLSocialPost[];
-  count: number;
-}
-
-export interface GHLGetPostResponse {
-  post: GHLSocialPost;
-}
-
-export interface GHLCreatePostResponse {
-  post: GHLSocialPost;
-}
-
-export interface GHLBulkDeleteResponse {
-  message: string;
-  deletedCount: number;
-}
-
-export interface GHLGetAccountsResponse {
-  accounts: GHLSocialAccount[];
-  groups: GHLSocialGroup[];
-}
-
-export interface GHLUploadCSVResponse {
-  filePath: string;
-  rowsCount: number;
-  fileName: string;
-}
-
-export interface GHLGetUploadStatusResponse {
-  csvs: GHLCSVImport[];
-  count: number;
-}
-
-export interface GHLGetCategoriesResponse {
-  categories: GHLSocialCategory[];
-  count: number;
-}
-
-export interface GHLGetCategoryResponse {
-  category: GHLSocialCategory;
-}
-
-export interface GHLGetTagsResponse {
-  tags: GHLSocialTag[];
-  count: number;
-}
-
-export interface GHLGetTagsByIdsResponse {
-  tags: GHLSocialTag[];
-  count: number;
-}
-
-// OAuth Response Interfaces
-export interface GHLGetGoogleLocationsResponse {
-  locations: {
-    location: GHLGoogleLocation;
-    account: GHLGoogleAccount;
-  };
-}
-
-export interface GHLGetFacebookPagesResponse {
-  pages: GHLFacebookPage[];
-}
-
-export interface GHLGetInstagramAccountsResponse {
-  accounts: GHLInstagramAccount[];
-}
-
-export interface GHLGetLinkedInAccountsResponse {
-  pages: GHLLinkedInPage[];
-  profile: GHLLinkedInProfile[];
-}
-
-export interface GHLGetTwitterAccountsResponse {
-  profile: GHLTwitterProfile[];
-}
-
-export interface GHLGetTikTokAccountsResponse {
-  profile: GHLTikTokProfile[];
-}
-
-// MCP Tool Parameters - Social Media Operations
-
-export interface MCPSearchPostsParams {
-  type?: 'recent' | 'all' | 'scheduled' | 'draft' | 'failed' | 'in_review' | 'published' | 'in_progress' | 'deleted';
-  accounts?: string;
-  skip?: number;
-  limit?: number;
-  fromDate: string;
-  toDate: string;
-  includeUsers?: boolean;
-  postType?: GHLPostType;
-}
-
-export interface MCPCreatePostParams {
-  accountIds: string[];
-  summary: string;
-  media?: GHLPostMedia[];
-  status?: GHLPostStatus;
-  scheduleDate?: string;
-  followUpComment?: string;
-  type: GHLPostType;
-  tags?: string[];
-  categoryId?: string;
-  tiktokPostDetails?: GHLTikTokPostDetails;
-  gmbPostDetails?: GHLGMBPostDetails;
-  userId?: string;
-}
-
-export interface MCPGetPostParams {
-  postId: string;
-}
-
-export interface MCPUpdatePostParams {
-  postId: string;
-  accountIds?: string[];
-  summary?: string;
-  media?: GHLPostMedia[];
-  status?: GHLPostStatus;
-  scheduleDate?: string;
-  followUpComment?: string;
-  type?: GHLPostType;
-  tags?: string[];
-  categoryId?: string;
-  tiktokPostDetails?: GHLTikTokPostDetails;
-  gmbPostDetails?: GHLGMBPostDetails;
-  userId?: string;
-}
-
-export interface MCPDeletePostParams {
-  postId: string;
-}
-
-export interface MCPBulkDeletePostsParams {
-  postIds: string[];
-}
-
-export interface MCPGetAccountsParams {
-  // No additional params - uses location from config
-}
-
-export interface MCPDeleteAccountParams {
-  accountId: string;
-  companyId?: string;
-  userId?: string;
-}
-
-export interface MCPUploadCSVParams {
-  file: any;
-}
-
-export interface MCPGetUploadStatusParams {
-  skip?: number;
-  limit?: number;
-  includeUsers?: boolean;
-  userId?: string;
-}
-
-export interface MCPSetAccountsParams {
-  accountIds: string[];
-  filePath: string;
-  rowsCount: number;
-  fileName: string;
-  approver?: string;
-  userId?: string;
-}
-
-export interface MCPGetCSVPostParams {
-  csvId: string;
-  skip?: number;
-  limit?: number;
-}
-
-export interface MCPFinalizeCSVParams {
-  csvId: string;
-  userId?: string;
-}
-
-export interface MCPDeleteCSVParams {
-  csvId: string;
-}
-
-export interface MCPDeleteCSVPostParams {
-  csvId: string;
-  postId: string;
-}
-
-export interface MCPGetCategoriesParams {
-  searchText?: string;
-  limit?: number;
-  skip?: number;
-}
-
-export interface MCPGetCategoryParams {
-  categoryId: string;
-}
-
-export interface MCPGetTagsParams {
-  searchText?: string;
-  limit?: number;
-  skip?: number;
-}
-
-export interface MCPGetTagsByIdsParams {
-  tagIds: string[];
-}
-
-// OAuth MCP Parameters
-export interface MCPStartOAuthParams {
-  platform: GHLSocialPlatform;
-  userId: string;
-  page?: string;
-  reconnect?: boolean;
-}
-
-export interface MCPGetOAuthAccountsParams {
-  platform: GHLSocialPlatform;
-  accountId: string;
-}
-
-export interface MCPAttachOAuthAccountParams {
-  platform: GHLSocialPlatform;
-  accountId: string;
-  attachData: any; // Platform-specific attach data
-}
-
 // ==== MISSING CALENDAR API TYPES ====
 
 // Calendar Groups Management Types
@@ -6686,3 +6086,187 @@ export interface CreateInvoiceResponseDto extends DefaultInvoiceResponseDto {}
 export interface UpdateInvoiceResponseDto extends DefaultInvoiceResponseDto {}
 export interface DeleteInvoiceResponseDto extends DefaultInvoiceResponseDto {}
 export interface VoidInvoiceResponseDto extends DefaultInvoiceResponseDto {}
+
+// ===== KNOWLEDGE BASE TYPES =====
+
+// Knowledge Base Metadata Interface
+export interface GHLKnowledgeBaseMetadata {
+  faqs: number;
+  urls: number;
+  richText: number;
+  files: number;
+  webSearches: number;
+  tables: number;
+}
+
+// Knowledge Base Interface
+export interface GHLKnowledgeBase {
+  id: string;
+  name: string;
+  nameLowerCase: string;
+  locationId: string;
+  description?: string;
+  deleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+  kbMetadata: GHLKnowledgeBaseMetadata;
+  isDefault?: boolean;
+}
+
+// Knowledge Base Request Interfaces
+export interface GHLCreateKnowledgeBaseRequest {
+  name: string;
+  description?: string;
+  locationId: string;
+}
+
+export interface GHLUpdateKnowledgeBaseRequest {
+  name?: string;
+  description?: string;
+}
+
+export interface GHLListKnowledgeBasesRequest {
+  locationId: string;
+  query?: string;
+  limit?: number;
+  lastKnowledgeBaseId?: string;
+}
+
+// Knowledge Base Response Interfaces
+export interface GHLKnowledgeBaseResponse {
+  success: boolean;
+  data: GHLKnowledgeBase;
+}
+
+export interface GHLListKnowledgeBasesResponse {
+  success: boolean;
+  data: {
+    knowledgeBases: Array<{
+      id: string;
+      name: string;
+      createdAt: string;
+    }>;
+    activeCount: number;
+    hasMore: boolean;
+    lastKnowledgeBaseId?: string;
+  };
+}
+
+export interface GHLDeleteKnowledgeBaseResponse {
+  success: boolean;
+}
+
+// MCP Parameter Interfaces for Knowledge Base Operations
+export interface MCPGetKnowledgeBaseParams {
+  knowledgeBaseId: string;
+}
+
+export interface MCPDeleteKnowledgeBaseParams {
+  knowledgeBaseId: string;
+}
+
+export interface MCPUpdateKnowledgeBaseParams {
+  knowledgeBaseId: string;
+  name?: string;
+  description?: string;
+}
+
+export interface MCPListKnowledgeBasesParams {
+  locationId?: string;
+  query?: string;
+  limit?: number;
+  lastKnowledgeBaseId?: string;
+}
+
+export interface MCPCreateKnowledgeBaseParams {
+  name: string;
+  description?: string;
+  locationId?: string;
+}
+
+// ===== KNOWLEDGE BASE FAQ TYPES =====
+
+// FAQ Entity
+export interface GHLKnowledgeBaseFAQ {
+  id: string;
+  question: string;
+  questionLowerCase: string;
+  answer: string;
+  knowledgeBaseId: string;
+  locationId: string;
+  trainedUrlId: string;
+  deleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// List FAQs Request
+export interface GHLListKnowledgeBaseFAQsRequest {
+  knowledgeBaseId: string;
+  locationId: string;
+  limit?: number;
+  lastFaqId?: string;
+}
+
+// List FAQs Response
+export interface GHLListKnowledgeBaseFAQsResponse {
+  count: number;
+  faqs: GHLKnowledgeBaseFAQ[];
+  lastFaqId?: string;
+  hasMore: boolean;
+}
+
+// Create FAQ Request
+export interface GHLCreateKnowledgeBaseFAQRequest {
+  locationId: string;
+  question: string;
+  answer: string;
+  knowledgeBaseId: string;
+}
+
+// Create FAQ Response
+export interface GHLCreateKnowledgeBaseFAQResponse {
+  success: boolean;
+  faq: GHLKnowledgeBaseFAQ;
+}
+
+// Update FAQ Request
+export interface GHLUpdateKnowledgeBaseFAQRequest {
+  question: string;
+  answer: string;
+}
+
+// Update FAQ Response
+export interface GHLUpdateKnowledgeBaseFAQResponse {
+  success: boolean;
+}
+
+// Delete FAQ Response
+export interface GHLDeleteKnowledgeBaseFAQResponse {
+  success: boolean;
+}
+
+// MCP Tool Parameters - Knowledge Base FAQ Operations
+export interface MCPListKnowledgeBaseFAQsParams {
+  knowledgeBaseId: string;
+  locationId?: string;
+  limit?: number;
+  lastFaqId?: string;
+}
+
+export interface MCPCreateKnowledgeBaseFAQParams {
+  locationId?: string;
+  question: string;
+  answer: string;
+  knowledgeBaseId: string;
+}
+
+export interface MCPUpdateKnowledgeBaseFAQParams {
+  faqId: string;
+  question: string;
+  answer: string;
+}
+
+export interface MCPDeleteKnowledgeBaseFAQParams {
+  faqId: string;
+}
